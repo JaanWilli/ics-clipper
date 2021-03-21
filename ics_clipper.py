@@ -29,27 +29,40 @@ def clip_ics(input_file, output_file, before_date: datetime.datetime):
         lines = f.readlines()
     print(" done")
 
-    print("Looking through events...")
-    first_event = 0
-    last_event = 0
-    events_before = 0
-    for i, l in enumerate(lines):
-        if l.strip() == 'BEGIN:VEVENT':
-            if not first_event:
-                first_event = i
-            last_event = i
-            events_before += 1
-        if l.startswith('DTSTART:'):
-            event_start = parse_ical_date(l.split(':')[1])
-            if event_start >= before_date:
-                break
-    print("Found %d events before %s to be clipped" % (events_before, input_date.date().isoformat()))
-    
+    start_event = 0
+    event_date = 0
+    events_clipped = 0
+    events_written = 0
+
+    f = open(output_file, 'w')
     print("Writing output file...", end="")
-    with open(output_file, 'w') as f:
-        f.writelines(lines[:first_event])
-        f.writelines(lines[last_event:])
+
+    for i, l in enumerate(lines):
+        # start 'recording' the event
+        if l.strip() == 'BEGIN:VEVENT':
+            start_event = i
+        
+        if l.startswith('DTSTART:'):
+            event_date = parse_ical_date(l.split(':')[1])
+
+        # case for lines at the beginning or end
+        if start_event == 0:
+            f.write(l)
+
+        # stop 'recording' the event and write it to the output file
+        if l.strip() == 'END:VEVENT':
+            if event_date < before_date:
+                events_clipped += 1
+            else:
+                f.writelines(lines[start_event:i+1])
+                events_written += 1
+                start_event = 0
+    
     print(" done")
+    f.close()
+
+    print("Clipped %d events before %s" % (events_clipped, before_date.date().isoformat()))
+    print("Wrote %d events to %s" % (events_written, output_file))
 
 
 parser = argparse.ArgumentParser()
