@@ -17,7 +17,11 @@ def parse_input_date(s):
     year = int(s[0])
     month = int(s[1])
     day = int(s[2])
-    return datetime.datetime(year, month, day)
+    try:
+        return datetime.datetime(year, month, day)
+    except:
+        print("Not a valid date")
+        exit()
 
 def clip_ics(input_file, output_file, before_date: datetime.datetime):
     print("Reading ics file...", end="")
@@ -59,7 +63,9 @@ parser.add_argument('-d', '--date', dest='date',
 args = vars(parser.parse_args())
 
 input_date = args['date']
-if not input_date:
+if input_date:
+    input_date = parse_input_date(input_date)
+else:
     input_date = datetime.datetime.now()
             
-clip_ics(args['input'], args['output'], datetime.datetime.now())
+clip_ics(args['input'], args['output'], input_date)
