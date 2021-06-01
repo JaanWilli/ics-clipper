@@ -57,7 +57,10 @@ def clip_ics(input_file, output_file, before_date: datetime.datetime):
                 f.writelines(lines[start_event:i+1])
                 events_written += 1
                 start_event = 0
-    
+
+    # add closing calendar line
+    f.write(lines[-1])
+
     print(" done")
     f.close()
 
